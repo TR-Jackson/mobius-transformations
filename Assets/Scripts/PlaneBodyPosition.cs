@@ -11,6 +11,8 @@ public class PlaneBodyPosition : MonoBehaviour
     public GameObject sphere;
     public Rigidbody rb;
 
+    public bool isControlling = true;
+
     // For position on plane
     public Complex pos = new Complex(5, 0);
     //bool at_infinity = false;
@@ -65,7 +67,7 @@ public class PlaneBodyPosition : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //sphere_to_plane();
+        if (!isControlling) sphere_to_plane();
         update_plane_pos();
         if (Input.GetKeyDown(KeyCode.Space))
         {

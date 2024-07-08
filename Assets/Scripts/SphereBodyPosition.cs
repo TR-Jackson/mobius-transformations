@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class SphereBodyPosition : MonoBehaviour
 {
+    public bool isControlling = false;
     public double phi;
     public double theta;
 
@@ -71,8 +72,13 @@ public class SphereBodyPosition : MonoBehaviour
         double py = (cy + r) * lambda;
         double pz = (cz - n) * lambda + n;
 
-        // replace with updating polar coords, end goal is function not to directly change position
-        transform.position = new UnityEngine.Vector3((float)px, (float)py, (float)pz);
+        // As spherical polar coords are relative to centre of sphere
+        double x = px - cx;
+        double y = py - cy;
+        double z = pz - cz;
+
+        theta = Math.Atan2(Math.Sqrt(x * x + y * y), z);
+        phi = Math.Atan2(y, x);
     }
 
     void Start()
@@ -81,7 +87,7 @@ public class SphereBodyPosition : MonoBehaviour
 
     void Update()
     {
-        plane_to_sphere();
-        //transform.position = new UnityEngine.Vector3(getX(), getY(), getZ());
+        if (!isControlling) plane_to_sphere();
+        transform.position = new UnityEngine.Vector3(getX(), getY(), getZ());
     }
 }
