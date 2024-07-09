@@ -54,13 +54,11 @@ public class PlaneBodyPosition : MonoBehaviour
         transform.position = newPlayerPos;
     }
 
-    // Start is called before the first frame update
     void Start()
     {
         mr = GetComponent<MeshRenderer>();
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (!isControlling)
