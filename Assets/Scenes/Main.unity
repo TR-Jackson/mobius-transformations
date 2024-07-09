@@ -410,16 +410,14 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 531300821}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: db9fb24f7083283448785fd65be4cf9c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   sphereBody: {fileID: 1429492438}
   sphere: {fileID: 1503440338}
-  rb: {fileID: 531300826}
   isControlling: 1
-  meshRenderer: {fileID: 531300823}
 --- !u!114 &531300828
 MonoBehaviour:
   m_ObjectHideFlags: 0

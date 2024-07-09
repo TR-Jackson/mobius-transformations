@@ -6,15 +6,15 @@ public class PlaneBodyPosition : MonoBehaviour
 {
     public GameObject sphereBody;
     public GameObject sphere;
-    public Rigidbody rb;
 
     public bool isControlling = true;
 
     // For position on plane
     public Complex pos = new Complex(5, 0);
-    //bool at_infinity = false;
+    bool at_infinity = false;
 
-    public MeshRenderer meshRenderer;
+    MeshRenderer mr;
+    Rigidbody rb;
 
     float getX()
     {
@@ -57,16 +57,18 @@ public class PlaneBodyPosition : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        rb.constraints = RigidbodyConstraints.FreezeRotation;
-        transform.position = new UnityEngine.Vector3(getX(), transform.position.y, getZ());
+        mr = GetComponent<MeshRenderer>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (!isControlling) sphere_to_plane();
-        update_plane_pos();
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (!isControlling)
+        {
+            sphere_to_plane();
+            update_plane_pos();
+        }
+        if (Input.GetKeyDown(KeyCode.M))
         {
             MobiusTransform(new Complex(1/Math.Sqrt(2), 1/Math.Sqrt(2)), 0, 0, 1);
         }
@@ -77,11 +79,14 @@ public class PlaneBodyPosition : MonoBehaviour
         if (c*pos + d == Complex.Zero) 
         {
             pos = Complex.Zero;
-            meshRenderer.enabled = false;
+            at_infinity = true;
+            mr.enabled = false;
         } else
         {
-            meshRenderer.enabled = true;
+            mr.enabled = true;
+            at_infinity = false;
             pos = (a * pos + b) / (c * pos + d);
         }
+        update_plane_pos();
     }
 }
