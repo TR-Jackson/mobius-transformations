@@ -10,15 +10,55 @@ public class Platform : MonoBehaviour
     Complex beta;
     public float gamma;
 
+    public GameObject sphere;
+
     public GameObject circle;
     public GameObject line;
 
-    void Start()
-    {
-        beta = new Complex(beta_real, beta_imag);
-    }
+    public GameObject tempp;
+    public GameObject tempq;
+    public GameObject tempc;
+    public GameObject tempn;
+    public GameObject tempk;
 
-    void Update()
+    private void SetSpherePlatform()
+    {
+        if (alpha != 0)
+        {
+            Complex centre = -beta / alpha;
+            double r1 = Math.Sqrt(1 / alpha * (Math.Pow(beta.Magnitude, 2) - gamma));
+            UnityEngine.Vector3 c1 = new UnityEngine.Vector3((float)centre.Real, 0, (float)centre.Imaginary);
+
+            UnityEngine.Vector3 cs = sphere.transform.position;
+            double rs = sphere.transform.localScale.x / 2;
+            UnityEngine.Vector3 N = cs + new UnityEngine.Vector3(0, (float)rs, 0); // north pole
+
+            UnityEngine.Vector3 p1 = c1 + new UnityEngine.Vector3((float)r1, 0, 0);
+            UnityEngine.Vector3 q1 = c1 - new UnityEngine.Vector3((float)r1, 0, 0);
+            UnityEngine.Vector3 k1 = c1 + new UnityEngine.Vector3(0, 0, (float)r1);
+
+            double lambdap = -2 * rs * (p1.y - cs.y - rs) / (Math.Pow(p1.x - cs.x, 2) + Math.Pow(p1.y - cs.y - rs, 2) + Math.Pow(p1.z - cs.z, 2));
+            double lambdaq = -2 * rs * (q1.y - cs.y - rs) / (Math.Pow(q1.x - cs.x, 2) + Math.Pow(q1.y - cs.y - rs, 2) + Math.Pow(q1.z - cs.z, 2));
+            double lambdak = -2 * rs * (k1.y - cs.y - rs) / (Math.Pow(k1.x - cs.x, 2) + Math.Pow(k1.y - cs.y - rs, 2) + Math.Pow(k1.z - cs.z, 2));
+
+            UnityEngine.Vector3 p2 = (p1 - N) * (float)lambdap + N;
+            UnityEngine.Vector3 q2 = (q1 - N) * (float)lambdaq + N;
+            UnityEngine.Vector3 k2 = (k1 - N) * (float)lambdak + N;
+
+            UnityEngine.Vector3 c2 = (p2 - q2) * 0.5f + q2;
+            UnityEngine.Vector3 n = UnityEngine.Vector3.Cross(p2 - c2, k2 - c2).normalized; // normal to circle on sphere
+            double r2 = (0.5f * (p2 - q2)).magnitude;
+
+            Debug.Log($"k={k2}, lambda = {lambdak}");
+
+            tempc.transform.position = c2;
+            tempp.transform.position = p2;
+            tempq.transform.position = q2;
+            tempn.transform.position = c2 - n;
+            tempk.transform.position = k2; 
+        }
+    }
+    private void SetPlanePlatform()
     {
         beta = new Complex(beta_real, beta_imag);
 
@@ -48,5 +88,15 @@ public class Platform : MonoBehaviour
             line.SetActive(true);
             circle.SetActive(false);
         }
+    }
+    void Start()
+    {
+        beta = new Complex(beta_real, beta_imag);
+    }
+
+    void Update()
+    {
+        SetPlanePlatform();
+        SetSpherePlatform();
     }
 }
