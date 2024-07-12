@@ -347,13 +347,15 @@ MonoBehaviour:
   beta_imag: 0
   gamma: -25
   sphere: {fileID: 1503440338}
-  circle: {fileID: 1575156994}
-  line: {fileID: 1359787976}
+  planeCircle: {fileID: 1575156994}
+  planeLine: {fileID: 1359787976}
   tempp: {fileID: 1951103287}
   tempq: {fileID: 1461610999}
   tempc: {fileID: 1862337760}
   tempn: {fileID: 186336833}
   tempk: {fileID: 1517087135}
+  lineMaterial: {fileID: 2100000, guid: ca5bc6a9fbcb3ac4ca9e1754a40714b7, type: 2}
+  segments: 100
 --- !u!1 &306482433
 GameObject:
   m_ObjectHideFlags: 0
