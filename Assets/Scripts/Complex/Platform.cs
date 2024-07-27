@@ -1,6 +1,7 @@
 using System.Numerics;
 using System;
 using UnityEngine;
+using System.Collections.Generic;
 
 public class Platform : MonoBehaviour
 {
@@ -24,8 +25,61 @@ public class Platform : MonoBehaviour
 
     public Material lineMaterial;
     public int segments = 100;
+    public int phiResolution = 100;
+    public int thetaResolution = 100;
+    public bool isBowl = true;
 
-    public void RenderCircleOutline(UnityEngine.Vector3 center, UnityEngine.Vector3 normal, double radius)
+    private UnityEngine.Vector3 ParamOfSurface(double phi, double theta, double rs, UnityEngine.Vector3 cs)
+    {
+        return new UnityEngine.Vector3((float)(rs*Math.Sin(theta)*Math.Sin(phi)), (float)(rs*Math.Cos(theta)), (float)(rs*Math.Sin(theta)*Math.Cos(phi))) + cs;
+    }
+
+    private void RenderSpherePlatform(UnityEngine.Vector3 cs, UnityEngine.Vector3 n, double rs, UnityEngine.Vector3 c2, double r2)
+    {
+        // need to determine whether rendering cap or bowl
+        double phiLower = 0;
+        double phiUpper = 2 * Math.PI;
+        double phiStep = (phiUpper - phiLower) / phiResolution;
+
+        double thetaLower;
+        double thetaUpper;
+        if (isBowl)
+        {
+            thetaLower = Math.Atan2((c2 - cs).y, r2);
+            thetaUpper = Math.PI;
+        }
+        else
+        {
+            thetaLower = 0;
+            thetaUpper = Math.Atan2((c2 - cs).y, r2);
+        }
+        double thetaStep = (thetaUpper - thetaLower) / thetaResolution;
+
+        List<UnityEngine.Vector3> vertices = new List<UnityEngine.Vector3>();
+
+        for (double theta=thetaLower; theta<=thetaUpper; theta += thetaStep)
+        {
+            if (theta == 0 || theta == Math.PI)
+            {
+                vertices.Add(ParamOfSurface(0, theta, rs, cs));
+            }
+            else
+            {
+                for (double phi = phiLower; phi <= phiLower; phi += phiStep)
+                {
+                    vertices.Add(ParamOfSurface(phi, theta, rs, cs));
+                }
+            }
+        }
+
+        List<int> triangles = new List<int>();
+
+        if (isBowl)
+        {
+
+        }
+    }
+    private void RenderCircleOutline(UnityEngine.Vector3 center, UnityEngine.Vector3 normal, double radius)
     {
         LineRenderer lineRenderer = sphereCircle.GetComponent<LineRenderer>();
 
