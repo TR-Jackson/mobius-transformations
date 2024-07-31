@@ -18,10 +18,13 @@ public class Platform : MonoBehaviour
     public GameObject planeLine;
     GameObject sphereCircle;
 
+    public GameObject tempo;
     public GameObject tempp;
     public GameObject tempq;
     public GameObject tempc;
     public GameObject tempn;
+    public GameObject v2;
+    public GameObject v3;
 
     public Material lineMaterial;
     public int segments = 100;
@@ -31,7 +34,7 @@ public class Platform : MonoBehaviour
 
     private UnityEngine.Vector3 ParamOfSurface(double phi, double theta, double rs, UnityEngine.Vector3 cs)
     {
-        return new UnityEngine.Vector3((float)(rs*Math.Sin(theta)*Math.Sin(phi)), (float)(rs*Math.Cos(theta)), (float)(rs*Math.Sin(theta)*Math.Cos(phi))) + cs;
+        return new UnityEngine.Vector3((float)(rs * Math.Sin(theta) * Math.Sin(phi)), (float)(rs * Math.Cos(theta)), (float)(rs * Math.Sin(theta) * Math.Cos(phi))) + cs;
     }
 
     private void RenderSpherePlatform(UnityEngine.Vector3 cs, UnityEngine.Vector3 n, double rs, UnityEngine.Vector3 c2, double r2)
@@ -57,7 +60,7 @@ public class Platform : MonoBehaviour
 
         List<UnityEngine.Vector3> vertices = new List<UnityEngine.Vector3>();
 
-        for (double theta=thetaLower; theta<=thetaUpper; theta += thetaStep)
+        for (double theta = thetaLower; theta <= thetaUpper; theta += thetaStep)
         {
             if (theta == 0 || theta == Math.PI)
             {
@@ -114,43 +117,114 @@ public class Platform : MonoBehaviour
         axis1.Normalize();
         axis2 = UnityEngine.Vector3.Cross(normal, axis1).normalized;
     }
+
+    private UnityEngine.Vector3 CalcCircleCentreFromPoints(UnityEngine.Vector3 o2, UnityEngine.Vector3 p2, UnityEngine.Vector3 q2)
+    {
+        UnityEngine.Vector3 n = UnityEngine.Vector3.Cross(p2 - o2, q2 - o2);
+
+        // Following code solves linear system Ax = b where x is centre of circle
+        double b1 = UnityEngine.Vector3.Dot(p2, n);
+        double b2 = 0.5 * (p2.sqrMagnitude - o2.sqrMagnitude);
+        double b3 = 0.5 * (q2.sqrMagnitude - o2.sqrMagnitude);
+
+        double[,] A =
+        {
+                { n.x, n.y, n.z },
+                { p2.x - o2.x, p2.y - o2.y, p2.z - o2.z },
+                { q2.x - o2.x, q2.y - o2.y, q2.z - o2.z }
+            };
+        // Calculate determinant of A
+        double detA = A[0, 0] * (A[1, 1] * A[2, 2] - A[1, 2] * A[2, 1])
+                   - A[0, 1] * (A[1, 0] * A[2, 2] - A[1, 2] * A[2, 0])
+                   + A[0, 2] * (A[1, 0] * A[2, 1] - A[1, 1] * A[2, 0]);
+
+        if (Mathf.Abs((float)detA) < 1e-10)
+        {
+            Debug.LogError("Matrix is not invertible.");
+            return new UnityEngine.Vector3(0,0,0);
+        }
+
+        // Calculate inverse of A
+        double invDetA = 1.0 / detA;
+        double[,] AInv = new double[3, 3];
+        AInv[0, 0] = invDetA * (A[1, 1] * A[2, 2] - A[1, 2] * A[2, 1]);
+        AInv[0, 1] = invDetA * (A[0, 2] * A[2, 1] - A[0, 1] * A[2, 2]);
+        AInv[0, 2] = invDetA * (A[0, 1] * A[1, 2] - A[0, 2] * A[1, 1]);
+        AInv[1, 0] = invDetA * (A[1, 2] * A[2, 0] - A[1, 0] * A[2, 2]);
+        AInv[1, 1] = invDetA * (A[0, 0] * A[2, 2] - A[0, 2] * A[2, 0]);
+        AInv[1, 2] = invDetA * (A[0, 2] * A[1, 0] - A[0, 0] * A[1, 2]);
+        AInv[2, 0] = invDetA * (A[1, 0] * A[2, 1] - A[1, 1] * A[2, 0]);
+        AInv[2, 1] = invDetA * (A[0, 1] * A[2, 0] - A[0, 0] * A[2, 1]);
+        AInv[2, 2] = invDetA * (A[0, 0] * A[1, 1] - A[0, 1] * A[1, 0]);
+
+        // Multiply AInv by b to get x
+        double cx = AInv[0, 0] * b1 + AInv[0, 1] * b2 + AInv[0, 2] * b3;
+        double cy = AInv[1, 0] * b1 + AInv[1, 1] * b2 + AInv[1, 2] * b3;
+        double cz = AInv[2, 0] * b1 + AInv[2, 1] * b2 + AInv[2, 2] * b3;
+
+        UnityEngine.Vector3 c2 = new UnityEngine.Vector3((float)cx, (float)cy, (float)cz);
+
+        tempc.transform.position = c2;
+        return c2;
+    }
+
+    private UnityEngine.Vector3 ProjectPlaneToSphere(UnityEngine.Vector3 p)
+    {
+        UnityEngine.Vector3 cs = sphere.transform.position;
+        double rs = sphere.transform.localScale.x / 2;
+        UnityEngine.Vector3 N = cs + new UnityEngine.Vector3(0, (float)rs, 0); // north pole
+
+        double lambda = -2 * rs * (p.y - cs.y - rs) / (Math.Pow(p.x - cs.x, 2) + Math.Pow(p.y - cs.y - rs, 2) + Math.Pow(p.z - cs.z, 2));
+
+        return (p - N) * (float)lambda + N;
+    }
+
     private void SetSpherePlatform()
     {
+        Complex centre = -beta / alpha;
+        double r1 = Math.Sqrt(1 / alpha * (Math.Pow(beta.Magnitude, 2) - gamma));
+        UnityEngine.Vector3 c1 = new UnityEngine.Vector3((float)centre.Real, 0, (float)centre.Imaginary);
+
         if (alpha != 0)
         {
-            Complex centre = -beta / alpha;
-            double r1 = Math.Sqrt(1 / alpha * (Math.Pow(beta.Magnitude, 2) - gamma));
-            UnityEngine.Vector3 c1 = new UnityEngine.Vector3((float)centre.Real, 0, (float)centre.Imaginary);
-
-            UnityEngine.Vector3 cs = sphere.transform.position;
-            double rs = sphere.transform.localScale.x / 2;
-            UnityEngine.Vector3 N = cs + new UnityEngine.Vector3(0, (float)rs, 0); // north pole
-
+            UnityEngine.Vector3 o1 = c1 + new UnityEngine.Vector3(0, 0, (float)r1);
             UnityEngine.Vector3 p1 = c1 + new UnityEngine.Vector3((float)r1, 0, 0);
             UnityEngine.Vector3 q1 = c1 - new UnityEngine.Vector3((float)r1, 0, 0);
 
-            double lambdap = -2 * rs * (p1.y - cs.y - rs) / (Math.Pow(p1.x - cs.x, 2) + Math.Pow(p1.y - cs.y - rs, 2) + Math.Pow(p1.z - cs.z, 2));
-            double lambdaq = -2 * rs * (q1.y - cs.y - rs) / (Math.Pow(q1.x - cs.x, 2) + Math.Pow(q1.y - cs.y - rs, 2) + Math.Pow(q1.z - cs.z, 2));
+            UnityEngine.Vector3 o2 = ProjectPlaneToSphere(o1);
+            UnityEngine.Vector3 p2 = ProjectPlaneToSphere(p1);
+            UnityEngine.Vector3 q2 = ProjectPlaneToSphere(q1);
 
-            UnityEngine.Vector3 p2 = (p1 - N) * (float)lambdap + N;
-            UnityEngine.Vector3 q2 = (q1 - N) * (float)lambdaq + N;
-
-            UnityEngine.Vector3 c2 = (p2 - q2) * 0.5f + q2;
-            double r2 = (0.5f * (p2 - q2)).magnitude;
-
-            double i1 = c2.x - cs.x;
-            double j1 = c2.y - cs.y;
-            double k1 = c2.x - cs.x;
-
-            double lambda = rs / Math.Sqrt(i1 * i1 + j1 * j1 + k1 * k1);
-
-            UnityEngine.Vector3 r = (c2 - cs) * (float)lambda + cs;
-            UnityEngine.Vector3 n = new UnityEngine.Vector3(r.x - cs.x, r.y - cs.y, r.z - cs.z).normalized; // normal to circle on sphere
-
-            tempc.transform.position = c2;
+            tempo.transform.position = o2;
             tempp.transform.position = p2;
             tempq.transform.position = q2;
-            tempn.transform.position = c2 + n;
+
+            UnityEngine.Vector3 c2 = CalcCircleCentreFromPoints(o2, p2, q2);
+            double r2 = (p2 - c2).magnitude;
+            UnityEngine.Vector3 n = UnityEngine.Vector3.Cross(p2 - o2, q2 - o2);
+
+            RenderCircleOutline(c2, n, r2);
+        } 
+        else
+        {
+            // TODO: fix when line
+            UnityEngine.Vector3 cs = sphere.transform.position;
+            double rs = sphere.transform.localScale.x / 2;
+
+            UnityEngine.Vector3 o1 = c1 + new UnityEngine.Vector3(0, 0, (float)r1);
+            
+            UnityEngine.Vector3 o2 = ProjectPlaneToSphere(o1);
+            UnityEngine.Vector3 p2 = cs + new UnityEngine.Vector3(0, (float)rs, 0);
+            UnityEngine.Vector3 q2 = cs - new UnityEngine.Vector3(0, (float)rs, 0);
+
+            UnityEngine.Vector3 c2 = CalcCircleCentreFromPoints(o2, p2, q2);
+            double r2 = rs;
+            UnityEngine.Vector3 n = UnityEngine.Vector3.Cross(p2 - o2, q2 - o2);
+
+            tempo.transform.position = o2;
+            tempp.transform.position = p2;
+            tempq.transform.position = q2;
+            tempn.transform.position = n;
 
             RenderCircleOutline(c2, n, r2);
         }
