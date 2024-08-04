@@ -31,6 +31,7 @@ public class Platform : MonoBehaviour
     public int phiResolution = 100;
     public int thetaResolution = 100;
     public bool isBowl = true;
+    Mesh mesh;
 
     private UnityEngine.Vector3 ParamOfSurface(double phi, double theta, double rs, UnityEngine.Vector3 cs)
     {
@@ -68,19 +69,56 @@ public class Platform : MonoBehaviour
             }
             else
             {
-                for (double phi = phiLower; phi <= phiLower; phi += phiStep)
+                for (double phi = phiLower; phi <= phiUpper; phi += phiStep)
                 {
                     vertices.Add(ParamOfSurface(phi, theta, rs, cs));
                 }
             }
         }
 
+
         List<int> triangles = new List<int>();
 
         if (isBowl)
         {
+            for (int j = 1; j <= phiResolution; j++) {
+                triangles.Add(0);
+                triangles.Add(j);
+                triangles.Add(j % phiResolution + 1);
+            }
 
+            for (int k = 1; k < thetaResolution; k++)
+            {
+                for (int j = 1; j <= phiResolution; j++)
+                {
+                    triangles.Add((k - 1) * phiResolution + j);
+                    triangles.Add(k * phiResolution + j);
+                    triangles.Add(k * phiResolution + j % phiResolution + 1);
+
+                    triangles.Add((k - 1) * phiResolution + j);
+                    triangles.Add(k * phiResolution + j % phiResolution + 1);
+                    triangles.Add((k - 1) * phiResolution + j + 1);
+                }
+            }
         }
+        mesh.Clear();
+        mesh.vertices = vertices.ToArray();
+        mesh.triangles = triangles.ToArray();
+
+        n = n.normalized;
+        UnityEngine.Quaternion rotation = UnityEngine.Quaternion.FromToRotation(UnityEngine.Vector3.up, n);
+
+        for (int i = 0; i < vertices.Count; i++)
+        {
+            UnityEngine.Vector3 translatedVertex = vertices[i] - cs;
+            translatedVertex = rotation * translatedVertex;
+            vertices[i] = translatedVertex + cs;
+        }
+
+        mesh.vertices = vertices.ToArray();
+        mesh.RecalculateBounds();
+        mesh.RecalculateNormals();
+
     }
     private void RenderCircleOutline(UnityEngine.Vector3 center, UnityEngine.Vector3 normal, double radius)
     {
@@ -181,6 +219,9 @@ public class Platform : MonoBehaviour
 
     private void SetSpherePlatform()
     {
+        UnityEngine.Vector3 cs = sphere.transform.position;
+        double rs = sphere.transform.localScale.x / 2;
+
         Complex centre = -beta / alpha;
         double r1 = Math.Sqrt(1 / alpha * (Math.Pow(beta.Magnitude, 2) - gamma));
         UnityEngine.Vector3 c1 = new UnityEngine.Vector3((float)centre.Real, 0, (float)centre.Imaginary);
@@ -204,12 +245,11 @@ public class Platform : MonoBehaviour
             UnityEngine.Vector3 n = UnityEngine.Vector3.Cross(p2 - o2, q2 - o2);
 
             RenderCircleOutline(c2, n, r2);
-        } 
+            RenderSpherePlatform(cs, n, rs + 0.1f, c2, r2);
+        }
         else
         {
             // TODO: fix when line
-            UnityEngine.Vector3 cs = sphere.transform.position;
-            double rs = sphere.transform.localScale.x / 2;
 
             UnityEngine.Vector3 o1 = c1 + new UnityEngine.Vector3(0, 0, (float)r1);
             
@@ -265,6 +305,8 @@ public class Platform : MonoBehaviour
         beta = new Complex(beta_real, beta_imag);
         sphereCircle = new GameObject("sphereCircle");
         sphereCircle.AddComponent<LineRenderer>();
+        mesh = new Mesh();
+        GetComponent<MeshFilter>().mesh = mesh;
     }
 
     void Update()
