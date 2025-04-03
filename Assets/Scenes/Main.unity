@@ -465,7 +465,7 @@ MonoBehaviour:
   tempn: {fileID: 186336833}
   v2: {fileID: 620216988}
   v3: {fileID: 1015138811}
-  lineMaterial: {fileID: 2100000, guid: ca5bc6a9fbcb3ac4ca9e1754a40714b7, type: 2}
+  lineMaterial: {fileID: 2100000, guid: 3e15663d5e5277241a6d522adb2fb43c, type: 2}
   segments: 100
   phiResolution: 100
   thetaResolution: 100
@@ -498,7 +498,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 0}
+  - {fileID: 2100000, guid: ca5bc6a9fbcb3ac4ca9e1754a40714b7, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

@@ -32,6 +32,8 @@ public class Platform : MonoBehaviour
     public int thetaResolution = 100;
     public bool isBowl = true;
     Mesh mesh;
+    public float thetaUpper;
+    public float thetaLower;
 
     private UnityEngine.Vector3 ParamOfSurface(double phi, double theta, double rs, UnityEngine.Vector3 cs)
     {
@@ -45,33 +47,39 @@ public class Platform : MonoBehaviour
         double phiUpper = 2 * Math.PI;
         double phiStep = (phiUpper - phiLower) / phiResolution;
 
-        double thetaLower;
-        double thetaUpper;
-        if (isBowl)
-        {
-            thetaLower = Math.Atan2((c2 - cs).y, r2);
-            thetaUpper = Math.PI;
-        }
-        else
-        {
-            thetaLower = 0;
-            thetaUpper = Math.Atan2((c2 - cs).y, r2);
-        }
+        //double thetaLower;
+        //double thetaUpper;
+        //if (isBowl)
+        //{
+        //    thetaLower = Math.Atan2(Math.Abs((c2 - cs).y), r2);
+        //    thetaUpper = Math.PI;
+        //}
+        //else
+        //{
+        //    thetaLower = 0;
+        //    thetaUpper = Math.Atan2((c2 - cs).y, r2);
+        //}
         double thetaStep = (thetaUpper - thetaLower) / thetaResolution;
 
         List<UnityEngine.Vector3> vertices = new List<UnityEngine.Vector3>();
+        n = n.normalized;
+        UnityEngine.Quaternion rotation = UnityEngine.Quaternion.FromToRotation(UnityEngine.Vector3.up, n);
 
         for (double theta = thetaLower; theta <= thetaUpper; theta += thetaStep)
         {
             if (theta == 0 || theta == Math.PI)
             {
-                vertices.Add(ParamOfSurface(0, theta, rs, cs));
+                UnityEngine.Vector3 translatedVertex = ParamOfSurface(0, theta, rs, cs) - cs;
+                translatedVertex = rotation * translatedVertex;
+                vertices.Add(translatedVertex + cs);
             }
             else
             {
                 for (double phi = phiLower; phi <= phiUpper; phi += phiStep)
                 {
-                    vertices.Add(ParamOfSurface(phi, theta, rs, cs));
+                    UnityEngine.Vector3 translatedVertex = ParamOfSurface(phi, theta, rs, cs) - cs;
+                    translatedVertex = rotation * translatedVertex;
+                    vertices.Add(translatedVertex + cs);
                 }
             }
         }
@@ -104,21 +112,6 @@ public class Platform : MonoBehaviour
         mesh.Clear();
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
-
-        n = n.normalized;
-        UnityEngine.Quaternion rotation = UnityEngine.Quaternion.FromToRotation(UnityEngine.Vector3.up, n);
-
-        for (int i = 0; i < vertices.Count; i++)
-        {
-            UnityEngine.Vector3 translatedVertex = vertices[i] - cs;
-            translatedVertex = rotation * translatedVertex;
-            vertices[i] = translatedVertex + cs;
-        }
-
-        mesh.vertices = vertices.ToArray();
-        mesh.RecalculateBounds();
-        mesh.RecalculateNormals();
-
     }
     private void RenderCircleOutline(UnityEngine.Vector3 center, UnityEngine.Vector3 normal, double radius)
     {
@@ -245,7 +238,7 @@ public class Platform : MonoBehaviour
             UnityEngine.Vector3 n = UnityEngine.Vector3.Cross(p2 - o2, q2 - o2);
 
             RenderCircleOutline(c2, n, r2);
-            RenderSpherePlatform(cs, n, rs + 0.1f, c2, r2);
+            RenderSpherePlatform(cs, n, rs, c2, r2);
         }
         else
         {
